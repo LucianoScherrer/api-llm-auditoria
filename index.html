@@ -1,0 +1,93 @@
+<button onclick="window.location.href='/logout'">🚪 Logout</button>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auditoria Médica</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        button { padding: 8px 15px; cursor: pointer; }
+        table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+        th { background-color: #f4f4f4; }
+        #loading { color: blue; font-weight: bold; display: none; }
+    </style>
+</head>
+<body>
+
+<h2>📄 Auditoria Médica</h2>
+
+<form id="uploadForm">
+    <input type="file" id="files" name="files" multiple required>
+    <button type="submit">Enviar</button>
+</form>
+
+<p id="loading">⏳ Processando arquivos...</p>
+
+<button onclick="baixarExcel()">📥 Baixar Excel</button>
+<button onclick="carregarAdmin()">📊 Atualizar Painel</button>
+
+<h3>Resultados</h3>
+<div id="tabela"></div>
+
+<script>
+document.getElementById("uploadForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const input = document.getElementById("files");
+    const formData = new FormData();
+
+    for (let i = 0; i < input.files.length; i++) {
+        formData.append("files", input.files[i]);
+    }
+
+    document.getElementById("loading").style.display = "block";
+
+    const response = await fetch("/upload-lote", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    document.getElementById("loading").style.display = "none";
+
+    gerarTabela(data);
+
+    input.value = "";
+});
+
+function gerarTabela(dados) {
+    if (!dados.length) return;
+
+    let html = "<table><tr>";
+    Object.keys(dados[0]).forEach(col => {
+        html += `<th>${col}</th>`;
+    });
+    html += "</tr>";
+
+    dados.forEach(row => {
+        html += "<tr>";
+        Object.values(row).forEach(val => {
+            html += `<td>${val}</td>`;
+        });
+        html += "</tr>";
+    });
+
+    html += "</table>";
+
+    document.getElementById("tabela").innerHTML = html;
+}
+
+async function baixarExcel() {
+    window.location.href = "/baixar-excel";
+}
+
+async function carregarAdmin() {
+    const response = await fetch("/admin");
+    const data = await response.json();
+    gerarTabela(data);
+}
+</script>
+
+</body>
+</html>
